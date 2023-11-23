@@ -19,8 +19,11 @@ namespace SmartwayTestTask.Repositories
 		{
 			// Лучше искать по departmentId, но изначально его нет, поэтому ищем существующий департамент по name и phone
 			var queryDepartment = "SELECT * FROM department WHERE Name=@Name and Phone=@Phone";
-
-			// Проверяем, существует ли переданный департамент, если существует, то привязываем его к создаваемому работнику
+			
+			/*
+				Проверяем, существует ли переданный департамент, 
+				если существует, то привязываем его к создаваемому работнику (предварительно создать департамент)
+			*/
 			Department? department;
 			using (var connection = _context.CreateConnection())
 			{
