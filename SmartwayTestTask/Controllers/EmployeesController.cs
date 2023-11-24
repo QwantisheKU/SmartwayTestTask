@@ -31,19 +31,6 @@ namespace SmartwayTestTask.Controllers
 			return StatusCode(StatusCodes.Status201Created, employee);
 		}
 
-		[HttpPatch("employees/{employeeId}")]
-		public async Task<ActionResult> UpdateEmployee(int employeeId, [FromBody] JsonPatchDocument<Employee> employeeDto)
-		{
-			var result = await _employeeService.UpdateEmployeeAsync(employeeId, employeeDto);
-
-			if (result == 0)
-			{
-				return NotFound();
-			}
-
-			return NoContent();
-		}
-
 		[HttpGet("employees-per-company")]
 		public async Task<ActionResult<IEnumerable<EmployeeDto>>> GetEmployeesByCompanyId([Required] int companyId)
 		{
@@ -68,6 +55,19 @@ namespace SmartwayTestTask.Controllers
 			}
 
 			return Ok(employees);
+		}
+
+		[HttpPatch("employees/{employeeId}")]
+		public async Task<ActionResult> UpdateEmployee(int employeeId, [FromBody] JsonPatchDocument<Employee> employeeDto)
+		{
+			var result = await _employeeService.UpdateEmployeeAsync(employeeId, employeeDto);
+
+			if (result == 0)
+			{
+				return NotFound();
+			}
+
+			return NoContent();
 		}
 
 		[HttpDelete("employees/{employeeId}")]

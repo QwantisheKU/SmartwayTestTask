@@ -27,7 +27,7 @@ namespace SmartwayTestTask.Services
 			// Или вернуть результат через DTO с employeeId внутри
 			return new
 			{
-				employeeId
+				Id = employeeId
 			};
 		}
 

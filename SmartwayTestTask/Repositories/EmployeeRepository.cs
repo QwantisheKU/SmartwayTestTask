@@ -27,7 +27,11 @@ namespace SmartwayTestTask.Repositories
 			Department? department;
 			using (var connection = _context.CreateConnection())
 			{
-				department = await connection.QueryFirstOrDefaultAsync<Department>(queryDepartment, new { employee.Department?.Name, employee.Department?.Phone });
+				department = await connection.QueryFirstOrDefaultAsync<Department>(queryDepartment, 
+					new { 
+						employee.Department?.Name, 
+						employee.Department?.Phone 
+					});
 			}
 			employee.DepartmentId = department?.Id != 0 ? department?.Id : null;
 
@@ -42,8 +46,8 @@ namespace SmartwayTestTask.Repositories
 				employee.Name,
 				employee.Surname,
 				employee.Phone,
-				@PassportType = employee.Passport?.Type,
-				@PassportNumber = employee.Passport?.Number,
+				PassportType = employee.Passport?.Type,
+				PassportNumber = employee.Passport?.Number,
 				employee.CompanyId,
 				employee.DepartmentId
 			};
@@ -77,25 +81,36 @@ namespace SmartwayTestTask.Repositories
 		public async Task<IEnumerable<Employee>> GetEmployeesByCompanyIdAsync(int companyId)
 		{
 			var query = "SELECT * FROM employee e LEFT JOIN department d ON e.DepartmentId = d.Id WHERE e.CompanyId = @CompanyId";
+			var passportQuery = "SELECT PassportType AS Type, PassportNumber AS Number FROM employee e WHERE e.CompanyId = @CompanyId";
 
 			using (var connection = _context.CreateConnection())
 			{
 				var employees = await connection.QueryAsync<Employee, Department, Employee>(query, 
 					map: (e, d) => { 
-						e.Department = d; 
+						e.Department = d;
 						e.DepartmentId = d.Id; 
 						return e; 
 					}, 
 					splitOn: "DepartmentId", 
 					param: new { companyId }
 				);
-				return employees.ToList();
+				var passports = await connection.QueryAsync<Passport>(passportQuery, new { companyId });
+
+				var employeesList = employees.ToList();
+				var passportsList = passports.ToList();
+				employeesList = PopulateEmployeesWithPassports(employeesList, passportsList);
+
+				return employeesList;
 			}
 		}
 
 		public async Task<IEnumerable<Employee>> GetEmployeesByDepartmentAsync(string name, string phone)
 		{
 			var query = "SELECT * FROM employee e LEFT JOIN department d ON e.DepartmentId = d.Id WHERE d.Name = @Name and d.Phone = @Phone";
+			var passportQuery = """
+			SELECT PassportType AS Type, PassportNumber AS Number FROM employee e 
+			LEFT JOIN department d ON e.DepartmentId = d.Id WHERE d.Name = @Name and d.Phone = @Phone
+			""";
 
 			using (var connection = _context.CreateConnection())
 			{
@@ -108,7 +123,13 @@ namespace SmartwayTestTask.Repositories
 					}, 
 					splitOn: "DepartmentId", 
 					param: new { Name = name, Phone = phone });
-				return employees.ToList();
+				var passports = await connection.QueryAsync<Passport>(passportQuery, new { Name = name, Phone = phone });
+
+				var employeesList = employees.ToList();
+				var passportsList = passports.ToList();
+				employeesList = PopulateEmployeesWithPassports(employeesList, passportsList);
+
+				return employeesList;
 			}
 		}
 
@@ -151,6 +172,20 @@ namespace SmartwayTestTask.Repositories
 			}
 
 			return rowsAffected;
+		}
+
+		// Привязываем паспорта к работникам, в случае расширения можно сделать generic
+		private List<Employee> PopulateEmployeesWithPassports(List<Employee> employees, List<Passport> passports)
+		{
+			if (employees.Count == passports.Count)
+			{
+				for (int i = 0; i < employees.Count; i++)
+				{
+					employees[i].Passport = passports[i];
+				}
+			}
+
+			return employees;
 		}
 	}
 }

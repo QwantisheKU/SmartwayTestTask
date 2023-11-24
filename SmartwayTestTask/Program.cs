@@ -7,7 +7,11 @@ using SmartwayTestTask.Services.Interfaces;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddSingleton<DbContext>();
+
+// Register Repositories
 builder.Services.AddTransient<IEmployeeRepository, EmployeeRepository>();
+
+// Register Services
 builder.Services.AddTransient<IEmployeeService, EmployeeService>();
 
 builder.Services.AddAutoMapper(typeof(Program));
